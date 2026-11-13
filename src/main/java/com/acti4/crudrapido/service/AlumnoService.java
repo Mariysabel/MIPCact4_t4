@@ -1,22 +1,23 @@
-
 package com.acti4.crudrapido.service;
 
 import java.util.List;
-import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.acti4.crudrapido.dto.AlumnoRequestDTO;
 import com.acti4.crudrapido.dto.AlumnoResponseDTO;
 import com.acti4.crudrapido.entity.Alumno;
+import com.acti4.crudrapido.exception.ResourceNotFoundException;
 import com.acti4.crudrapido.repository.AlumnoRepository;
 
 @Service
 public class AlumnoService {
 
-    @Autowired
-    AlumnoRepository alumnoRepository;
+    private final AlumnoRepository alumnoRepository;
+
+    public AlumnoService(AlumnoRepository alumnoRepository) {
+        this.alumnoRepository = alumnoRepository;
+    }
 
     public List<AlumnoResponseDTO> getAlumnoss() {
         return alumnoRepository.findAll()
@@ -25,9 +26,12 @@ public class AlumnoService {
                 .toList();
     }
 
-    public Optional<AlumnoResponseDTO> getAlumnoById(Long id) {
-        return alumnoRepository.findById(id)
-                .map(this::convertirDTO);
+    public AlumnoResponseDTO getAlumnoById(Long id) {
+        Alumno alumno = alumnoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró el alumno con ID: " + id));
+
+        return convertirDTO(alumno);
     }
 
     public AlumnoResponseDTO saveOrUpdate(AlumnoRequestDTO dto) {
@@ -38,7 +42,25 @@ public class AlumnoService {
     }
 
     public void deleteAlumno(Long id) {
-        alumnoRepository.deleteById(id);
+        Alumno alumno = alumnoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró el alumno con ID: " + id));
+
+        alumnoRepository.delete(alumno);
+    }
+
+    public AlumnoResponseDTO updateAlumno(Long id, AlumnoRequestDTO dto) {
+        Alumno alumno = alumnoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró el alumno con ID: " + id));
+
+        alumno.setNombre(dto.getNombre());
+        alumno.setEdad(dto.getEdad());
+        alumno.setEmail(dto.getEmail());
+
+        Alumno actualizado = alumnoRepository.save(alumno);
+
+        return convertirDTO(actualizado);
     }
 
     private Alumno convertirEntidad(AlumnoRequestDTO dto) {
@@ -60,18 +82,4 @@ public class AlumnoService {
 
         return dto;
     }
-
-    public Optional<AlumnoResponseDTO> updateAlumno(Long id, AlumnoRequestDTO dto) {
-        return alumnoRepository.findById(id).map(alumno -> {
-            alumno.setNombre(dto.getNombre());
-            alumno.setEdad(dto.getEdad());
-            alumno.setEmail(dto.getEmail());
-
-            Alumno actualizado = alumnoRepository.save(alumno);
-
-            return convertirDTO(actualizado);
-        });
-    }
-
-    
 }
