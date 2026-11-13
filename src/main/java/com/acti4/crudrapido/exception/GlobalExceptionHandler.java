@@ -5,6 +5,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // Correo duplicado: 409 Conflict
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleEmailAlreadyExists(
             EmailAlreadyExistsException ex,
@@ -24,6 +26,7 @@ public class GlobalExceptionHandler {
                 request);
     }
 
+    // Credenciales incorrectas: 401 Unauthorized
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidCredentials(
             InvalidCredentialsException ex,
@@ -35,6 +38,7 @@ public class GlobalExceptionHandler {
                 request);
     }
 
+    // Recurso inexistente: 404 Not Found
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFound(
             ResourceNotFoundException ex,
@@ -46,6 +50,7 @@ public class GlobalExceptionHandler {
                 request);
     }
 
+    // JSON incorrecto: 400 Bad Request
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidJson(
             HttpMessageNotReadableException ex,
@@ -57,6 +62,7 @@ public class GlobalExceptionHandler {
                 request);
     }
 
+    // Argumentos incorrectos: 400 Bad Request
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(
             IllegalArgumentException ex,
@@ -68,6 +74,7 @@ public class GlobalExceptionHandler {
                 request);
     }
 
+    // Método reutilizable para construir respuestas
     private ResponseEntity<Map<String, Object>> createResponse(
             HttpStatus status,
             String message,
@@ -80,5 +87,20 @@ public class GlobalExceptionHandler {
                 "path", request.getRequestURI());
 
         return ResponseEntity.status(status).body(body);
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationErrors(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
+            
+        String message = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> error.getDefaultMessage())
+                .findFirst()
+                .orElse("Los datos enviados no son válidos");
+            
+        return createResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 }

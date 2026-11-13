@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.acti4.crudrapido.dto.AlumnoRequestDTO;
 import com.acti4.crudrapido.dto.AlumnoResponseDTO;
 import com.acti4.crudrapido.service.AlumnoService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/alumnos")
@@ -33,20 +34,22 @@ public class AlumnoController {
     }
 
     @PostMapping
-    public ResponseEntity<AlumnoResponseDTO> saveAlumno(
-            @RequestBody AlumnoRequestDTO dto) {
+    public ResponseEntity<AlumnoResponseDTO> createAlumno(
+            @Valid @RequestBody AlumnoRequestDTO alumnoDTO) {
 
-        AlumnoResponseDTO alumno = alumnoService.saveOrUpdate(dto);
+        AlumnoResponseDTO response = alumnoService.saveOrUpdate(alumnoDTO);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(alumno);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<AlumnoResponseDTO> updateAlumno(
             @PathVariable Long id,
-            @RequestBody AlumnoRequestDTO dto) {
+            @Valid @RequestBody AlumnoRequestDTO alumnoDTO) {
 
-        return ResponseEntity.ok(alumnoService.updateAlumno(id, dto));
+        AlumnoResponseDTO response = alumnoService.updateAlumno(id, alumnoDTO);
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
